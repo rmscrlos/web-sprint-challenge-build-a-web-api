@@ -10,5 +10,11 @@ server.use(express.json());
 
 server.use(projectsRouter);
 server.use(actionsRouter);
+server.use((err, req, res, next) => {
+	console.log(err);
+	res.status(500).json({
+		message: 'Something went wrong, try again later.'
+	});
+});
 
 module.exports = server;

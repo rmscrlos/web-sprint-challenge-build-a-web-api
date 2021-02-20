@@ -1,84 +1,52 @@
 // Write your "actions" router here!
 const express = require('express');
 const actiondb = require('./actions-model');
+const { checkActionData, checkActionId } = require('../../middleware/actions');
 
 const router = express.Router();
 
 // get all actions
-router.get('/api/actions', (req, res) => {
+router.get('/api/actions', (req, res, next) => {
 	actiondb
 		.get()
 		.then(actions => {
 			res.status(200).json(actions);
 		})
-		.catch(err => {
-			res.status(500).json({
-				message: 'Unable to get actions. Something went wrong.'
-			});
-		});
+		.catch(next);
 });
 
 //get action by id
-router.get('/api/actions/:id', (req, res) => {
+router.get('/api/actions/:id', checkActionId(), (req, res, next) => {
 	actiondb
-		.get(req.params.id)
+		.get()
 		.then(action => {
-			if (action) {
-				res.status(200).json(action);
-			} else {
-				res.status(404).json({
-					message: 'Action not found.'
-				});
-			}
+			res.status(200).json(action);
 		})
-		.catch(err => {
-			res.status(500).json({
-				message: 'Error retrieving action.'
-			});
-		});
+		.catch(next);
 });
 
 // create a new action
-router.post('/api/actions', (req, res) => {
-	if (!req.body.project_id || !req.body.description || !req.body.notes) {
-		return res.status(400).json({
-			message: 'Missing project id, description or notes'
-		});
-	}
-
+router.post('/api/actions', checkActionData(), (req, res, next) => {
 	actiondb
 		.insert(req.body)
 		.then(action => {
 			res.status(201).json(action);
 		})
-		.catch(err => {
-			res.status(500).json({
-				message: 'Error creating action.'
-			});
-		});
+		.catch(next);
 });
 
 // update existing action
-router.put('/api/actions/:id', (req, res) => {
-	if (!req.body.project_id || !req.body.description || !req.body.notes) {
-		return res.status(400).json({
-			message: 'Missing project id, description or notes'
-		});
-	}
-
-	actiondb.update(req.params.id, req.body).then(action => {
-		if (action) {
+router.put('/api/actions/:id', checkActionData(), checkActionId(), (req, res, next) => {
+	actiondb
+		.update(req.params.id, req.body)
+		.then(action => {
 			res.status(200).json(action);
-		} else {
-			res.status(404).json({
-				message: 'Action not found.'
-			});
-		}
-	});
+		})
+		.catch(next);
 });
 
 // delete exiting action
-router.delete('/api/actions/:id', (req, res) => {
+router.delete('/api/actions/:id', checkActionId(), (req, res, next) => {
 	actiondb
 		.remove(req.params.id)
 		.then(action => {
@@ -92,11 +60,7 @@ router.delete('/api/actions/:id', (req, res) => {
 				});
 			}
 		})
-		.catch(err => {
-			res.status(500).json({
-				message: 'Error deleting action.'
-			});
-		});
+		.catch(next);
 });
 
 module.exports = router;
